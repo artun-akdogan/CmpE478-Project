@@ -110,32 +110,30 @@ class CSR_Matrix{
 
     // Non optimal value set. Try not to use
     void set(uint row, uint col, T val){
-        for(uint i=row_begin[row]; i<=row_begin[row+1]; i++){
-            if(col < col_indices[i] || i==row_begin[row+1]){
-                values.insert(values.begin()+i, val);
-                col_indices.insert(col_indices.begin()+i, col);
-                break;
-            }
-            if(col == col_indices[i]){
-                values[i] = val;
-                return;
-            }
+        auto st = next(col_indices.begin(), row_begin[row]);
+        auto end = next(col_indices.begin(), row_begin[row+1]);
+        int loc = distance(col_indices.begin(), lower_bound(st, end, col));
+        if(col == col_indices[loc] && loc < row_begin[row+1]){
+            values[loc] = val;
+            return;
         }
+        // Zero value sets are in linear time O(col*row)
+        values.insert(values.begin()+loc, val);
+        col_indices.insert(col_indices.begin()+loc, col);
         for(uint i=row+1; i<=this->row; i++){
             row_begin[i]++;
         }
     }
 
+    // Return value in worst case O(log(col))
     T val(uint row, uint col){
-        for(uint i=row_begin[row]; i<=row_begin[row+1]; i++){
-            if(col < col_indices[i] || i==row_begin[row+1]){
-                return 0;
-            }
-            if(col == col_indices[i]){
-                return values[i];
-            }
+        auto st = next(col_indices.begin(), row_begin[row]);
+        auto end = next(col_indices.begin(), row_begin[row+1]);
+        int loc = distance(col_indices.begin(), lower_bound(st, end, col));
+        if(col == col_indices[loc] && loc < row_begin[row+1]){
+            return values[loc];
         }
-        return -1;
+        return 0;
     }
 };
 
