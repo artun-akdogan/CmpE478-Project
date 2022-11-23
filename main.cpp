@@ -135,6 +135,17 @@ class CSR_Matrix{
         }
         return 0;
     }
+
+    vector<T> mul(const vector<T> &vec, T sca){
+        assert(vec.size()==this->col);
+        vector<T> ret(this->row);
+        for(uint i=0; i<this->row; i++){
+            for(uint l=row_begin[i]; l<row_begin[i+1]; l++){
+                ret[i] += values[l] * vec[col_indices[l]] * sca;
+            }
+        }
+        return ret;
+    }
 };
 
 // Currently, main function is only for test and runtime measurement
@@ -150,15 +161,21 @@ int main(){
         {0, 42, 0, 44, 0},
         {51, 52, 0, 0, 55}
     };
+    vector<int> vec(5, 2);
     CSR_Matrix<int> csr(vect);
     csr.set(1, 0, 22);
     csr.set(3, 4, 100);
     csr.set(1, 2, 200);
+    vector<int> mulled = csr.mul(vec, 3);
     for(uint i=0; i<vect.size(); i++){
         for(uint l=0; l<vect[0].size(); l++){
             cout << csr.val(i, l) << " ";
         }
         cout << "\n";
+    }
+    for(uint i=0; i<mulled.size(); i++){
+        
+        cout << mulled[i] <<"\n";
     }
 
     csr.write("test.txt");
