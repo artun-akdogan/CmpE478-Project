@@ -12,6 +12,7 @@
 #include <assert.h>
 
 using namespace std;
+typedef unsigned int uint;
 
 // Convert a vector to vector of strings
 template<typename T>
@@ -57,9 +58,12 @@ void write_csv(const string &filename, const vector<string> &colname, const vect
 template<typename T>
 class CSR_Matrix{
     private:
-    vector<int> row_begin;
+    uint row, col;
+    // Value indices. Must be ordered
+    vector<uint> row_begin;
+    vector<uint> col_indices;
+    //Non zero values
     vector<T> values;
-    vector<int> col_indices;
 
     public:
     // Write matrix to file
@@ -77,12 +81,21 @@ class CSR_Matrix{
         csv.close();
     }
 
+    // Initialize an empty matrix
+    CSR_Matrix(uint row, uint col){
+        this.row = row;
+        this.col = col;
+
+    }
+
     // Initialize a matrix from vector
     CSR_Matrix(vector<vector<T>> matrix){
+        this->row = matrix.size();
+        this->col = matrix[0].size();
         row_begin.resize(matrix.size()+1, -1);
-        for(int i=0; i<matrix.size(); i++){
+        for(uint i=0; i<matrix.size(); i++){
             assert(matrix[0].size()==matrix[i].size()); // Assert fixed matrix in column number
-            for(int l=0; l<matrix[0].size(); l++){
+            for(uint l=0; l<matrix[0].size(); l++){
                 if(matrix[i][l]!=0){
                     if(row_begin[i]==-1){
                         row_begin[i] = values.size();
@@ -94,6 +107,36 @@ class CSR_Matrix{
         }
         row_begin.back() = values.size();
     }
+
+    // Non optimal value set. Try not to use
+    void set(uint row, uint col, T val){
+        for(uint i=row_begin[row]; i<=row_begin[row+1]; i++){
+            if(col < col_indices[i] || i==row_begin[row+1]){
+                values.insert(values.begin()+i, val);
+                col_indices.insert(col_indices.begin()+i, col);
+                break;
+            }
+            if(col == col_indices[i]){
+                values[i] = val;
+                return;
+            }
+        }
+        for(uint i=row+1; i<=this->row; i++){
+            row_begin[i]++;
+        }
+    }
+
+    T val(uint row, uint col){
+        for(uint i=row_begin[row]; i<=row_begin[row+1]; i++){
+            if(col < col_indices[i] || i==row_begin[row+1]){
+                return 0;
+            }
+            if(col == col_indices[i]){
+                return values[i];
+            }
+        }
+        return -1;
+    }
 };
 
 // Currently, main function is only for test and runtime measurement
@@ -101,7 +144,6 @@ int main(){
     ios::sync_with_stdio(false); // Comment if stdio has been used!!!
 
     // Test for csr write
-    /*
     vector<vector<int>> vect
     {
         {11, 0, 13, 14, 0},
@@ -111,8 +153,17 @@ int main(){
         {51, 52, 0, 0, 55}
     };
     CSR_Matrix<int> csr(vect);
+    csr.set(1, 0, 22);
+    csr.set(3, 4, 100);
+    csr.set(1, 2, 200);
+    for(uint i=0; i<vect.size(); i++){
+        for(uint l=0; l<vect[0].size(); l++){
+            cout << csr.val(i, l) << " ";
+        }
+        cout << "\n";
+    }
+
     csr.write("test.txt");
-    */
 
     //Test for csvwrite
     /*
