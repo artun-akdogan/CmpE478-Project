@@ -16,6 +16,16 @@ using namespace std;
 typedef unsigned int uint;
 
 template<typename T>
+T check_sub_ops(const vector<T> &vector1, const vector<T> &vector2){
+    assert(vector1.size()==vector2.size());
+    T res=0;
+    for(uint i=0; i<vector1.size(); i++){
+        res += vector1[i] - vector2[i];
+    }
+    return res;
+}
+
+template<typename T>
 class CSR_Matrix{
     private:
     uint row, col;
@@ -117,12 +127,12 @@ class CSR_Matrix{
         return 0;
     }
 
-    vector<T> mul(const vector<T> &vec, T sca){
+    vector<T> ops(const vector<T> &vec, T sca, T add){
         assert(vec.size()==this->col);
         vector<T> ret(this->row);
         for(uint i=0; i<this->row; i++){
             for(uint l=row_begin[i]; l<row_begin[i+1]; l++){
-                ret[i] += values[l] * vec[col_indices[l]] * sca;
+                ret[i] += (values[l] * vec[col_indices[l]] * sca) + add;
             }
         }
         return ret;

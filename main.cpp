@@ -20,7 +20,41 @@ typedef unsigned int uint;
 // Currently, main function is only for test and runtime measurement
 int main(){
     ios::sync_with_stdio(false); // Comment if stdio has been used!!!
+    vector<vector<double>> P_vec
+    {
+        {1, 0, 1, 1, 0},
+        {0, 0, 1, 1, 0},
+        {1, 1, 1, 1, 0},
+        {0, 1, 0, 1, 0},
+        {1, 1, 0, 0, 1}
+    };
+    /*
+    For below matrix, google algorithm has given in 26 iterations:
+    5.4697
+    3.57576
+    6.98485
+    2.89394
+    5.26136
+    */
+    CSR_Matrix P(P_vec);
+    double alpha = 0.2;
+    double epsillon = 1e-6;
+    vector<double> r_t, r_t1(P.get_size().second, 1);
+    int i=0;
+    do{
+        r_t = r_t1;
+        r_t1 = P.ops(r_t, alpha, 1-alpha);
+        i++;
+        cout << check_sub_ops(r_t1, r_t) << " " << epsillon<< endl;
+    } while(check_sub_ops(r_t1, r_t) > epsillon);
 
+    cout << i<<endl;
+    for(uint i=0; i<r_t1.size(); i++){
+        cout << r_t1[i] << " " << r_t[i] <<"\n";
+    }
+
+
+/*
     // Test for csr write
     vector<vector<int>> vect
     {
@@ -52,6 +86,8 @@ int main(){
     }
 
     csr.write("test.txt");
+*/
+    
 
     //Test for csvwrite
     /*
