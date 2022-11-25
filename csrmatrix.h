@@ -73,8 +73,8 @@ class CSR_Matrix{
 
     // Initialize an empty matrix
     CSR_Matrix(uint row, uint col){
-        this.row = row;
-        this.col = col;
+        this->row = row;
+        this->col = col;
         row_begin.resize(row+1, UINT_MAX);
         row_begin.back() = 0;
     }

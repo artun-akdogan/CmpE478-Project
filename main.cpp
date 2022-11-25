@@ -11,15 +11,20 @@
 // #define NDEBUG
 #include <assert.h>
 
+#include "parser.h"
 #include "csrmatrix.h"
 #include "csv.h"
 
 using namespace std;
-typedef unsigned int uint;
+#define uint unsigned int
 
 // Currently, main function is only for test and runtime measurement
 int main(){
     ios::sync_with_stdio(false); // Comment if stdio has been used!!!
+
+    Parser("graph.txt");
+    return 0;
+
     vector<vector<double>> P_vec
     {
         {1, 0, 1, 1, 0},
