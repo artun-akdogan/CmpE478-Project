@@ -79,6 +79,16 @@ class CSR_Matrix{
         row_begin.back() = 0;
     }
 
+    // Initialize matrix from file
+    CSR_Matrix(const string &filename){
+        ifstream csv(filename);
+        string str_row, str_val, str_col;
+        csv >> str_row >> str_val >> str_col;
+        row_begin = string_to_ivector(str_row, ",");
+        values = string_to_dvector(str_val, ",");
+        col_indices = string_to_ivector(str_col, ",");
+    }
+
     // Initialize a matrix from vector
     CSR_Matrix(vector<vector<T>> matrix){
         this->row = matrix.size();

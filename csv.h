@@ -21,6 +21,33 @@ inline vector<string> vector_to_string(const vector<T> &vec){
     return ret;
 }
 
+inline vector<double> string_to_dvector(const string &str, const string &delimiter){
+    vector<double> ret;
+    size_t last = 0;
+    size_t next = 0;
+    while ((next = str.find(delimiter, last)) != string::npos) {
+        string temp = str.substr(last, next-last);
+        ret.push_back(stod(temp));
+        last = next + 1;
+    }
+    string temp = str.substr(last);
+    ret.push_back(stod(temp));
+    return ret;
+}
+inline vector<int> string_to_ivector(const string &str, const string &delimiter){
+    vector<int> ret;
+    size_t last = 0;
+    size_t next = 0;
+    while ((next = str.find(delimiter, last)) != string::npos) {
+        string temp = str.substr(last, next-last);
+        ret.push_back(stoi(temp));
+        last = next + 1;
+    }
+    string temp = str.substr(last);
+    ret.push_back(stoi(temp));
+    return ret;
+}
+
 const string join(const vector<string> &lst, const string &delim){
     // Basic string vector join, similar to Python's
     string ret;

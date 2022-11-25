@@ -23,6 +23,7 @@ int main(){
     ios::sync_with_stdio(false); // Comment if stdio has been used!!!
 
     Parser *p = new Parser("graph.txt");
+    p->csr->write("backup.csv");
 
     double alpha = 0.2;
     double epsillon = 1e-6;
