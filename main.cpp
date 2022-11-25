@@ -1,4 +1,5 @@
 #include <string>
+#include <cstring>
 #include <vector>
 #include <algorithm>
 #include <fstream>
@@ -19,22 +20,32 @@ using namespace std;
 #define uint unsigned int
 
 // Currently, main function is only for test and runtime measurement
-int main(){
+int main(int argc, char** argv){
     ios::sync_with_stdio(false); // Comment if stdio has been used!!!
+    Parser *parse;
+    CSR_Matrix<double> *P;
 
-    Parser *p = new Parser("graph.txt");
-    p->csr->write("backup.csv");
+    if(argc==3 && strcmp(argv[1], "load")==0){
+        P = new CSR_Matrix<double>(string(argv[2]));
+    }
+    else{
+        parse = new Parser("graph.txt");
+        P = parse->csr;
+        P->write("backup.csv");
+    }
+
+    cout << "CSR Matric Initialized" << endl;
 
     double alpha = 0.2;
     double epsillon = 1e-6;
-    vector<double> r_t, r_t1(p->csr->get_size().second, 1);
+    vector<double> r_t, r_t1(P->get_size().second, 1);
     int i=0;
     
     auto st = chrono::high_resolution_clock::now();
-    cout << "Matrix in size: " << p->csr->get_size().first << " " << p->csr->get_size().second <<endl;
+    cout << "Matrix in size: " << P->get_size().first << " " << P->get_size().second <<endl;
     do{
         r_t = r_t1;
-        r_t1 = p->csr->ops(r_t, alpha, 1-alpha);
+        r_t1 = P->ops(r_t, alpha, 1-alpha);
         i++;
         cout << check_sub_ops(r_t1, r_t) << " " << epsillon<< endl;
     } while(abs(check_sub_ops(r_t1, r_t)) > epsillon);
@@ -52,8 +63,10 @@ int main(){
         cout << r_t[i] <<endl;
     }
 
-
-    delete p;
+    if(argc==3 && strcmp(argv[1], "load"))
+        delete P;
+    else
+        delete parse;
     return 0;
 
     /*

@@ -34,13 +34,13 @@ inline vector<double> string_to_dvector(const string &str, const string &delimit
     ret.push_back(stod(temp));
     return ret;
 }
-inline vector<int> string_to_ivector(const string &str, const string &delimiter){
-    vector<int> ret;
+inline vector<unsigned int> string_to_uivector(const string &str, const string &delimiter){
+    vector<unsigned int> ret;
     size_t last = 0;
     size_t next = 0;
     while ((next = str.find(delimiter, last)) != string::npos) {
         string temp = str.substr(last, next-last);
-        ret.push_back(stoi(temp));
+        ret.push_back(stoul(temp));
         last = next + 1;
     }
     string temp = str.substr(last);

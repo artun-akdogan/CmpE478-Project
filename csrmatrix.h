@@ -2,6 +2,7 @@
 #define CSRMATRIX_H
 
 #include <fstream>
+#include <iostream>
 #include <vector>
 #include <algorithm>
 #include <limits.h>
@@ -39,6 +40,10 @@ class CSR_Matrix{
     // Write matrix to file
     void write(const string &filename){
         string buffer;
+        buffer += to_string(this->row);
+        buffer += ",";
+        buffer += to_string(this->col);
+        buffer += "\n";
         buffer += join(vector_to_string(row_begin), ",");
         buffer += "\n";
         buffer += join(vector_to_string(values), ",");
@@ -82,11 +87,16 @@ class CSR_Matrix{
     // Initialize matrix from file
     CSR_Matrix(const string &filename){
         ifstream csv(filename);
-        string str_row, str_val, str_col;
-        csv >> str_row >> str_val >> str_col;
-        row_begin = string_to_ivector(str_row, ",");
+        string str_init, str_row, str_val, str_col;
+        csv >> str_init >> str_row >> str_val >> str_col;
+        cout << "Read file" << endl;
+        vector<uint>temp = string_to_uivector(str_init, ",");
+        this->row = temp[0];
+        this->col = temp[1];
+        row_begin = string_to_uivector(str_row, ",");
         values = string_to_dvector(str_val, ",");
-        col_indices = string_to_ivector(str_col, ",");
+        col_indices = string_to_uivector(str_col, ",");
+
     }
 
     // Initialize a matrix from vector
@@ -120,18 +130,19 @@ class CSR_Matrix{
                 cout << i << " " << arr_dict[i] << " " << node[arr_dict[i]].size() << endl;
             }
 
-            row_begin.push_back(UINT_MAX);
             uint old_size = values.size();
             values.resize(values.size()+node[arr_dict[i]].size());
             col_indices.resize(values.size());
+            if(values.size()==old_size){
+                row_begin.push_back(UINT_MAX);
+            }else{
+                row_begin.push_back(old_size);
+            }
 
             //for(auto x: node[arr_dict[i]]){
-            for(int i=0; i<node[arr_dict[i]].size(); i++){
-                if(row_begin.back()==UINT_MAX){
-                    row_begin.back() = values.size();
-                }
-                values[old_size+i]=1;
-                col_indices[old_size+i]=name_dict[node[arr_dict[i]][i]];
+            for(int l=0; l<node[arr_dict[i]].size(); l++){
+                values[old_size+l]=1;
+                col_indices[old_size+l]=name_dict[node[arr_dict[i]][l]];
             }
         }
         row_begin.push_back(values.size());
@@ -169,8 +180,12 @@ class CSR_Matrix{
     vector<T> ops(const vector<T> &vec, T sca, T add){
         assert(vec.size()==this->col);
         vector<T> ret(this->row);
-        for(uint i=0; i<this->row; i++){
-            for(uint l=row_begin[i]; l<row_begin[i+1]; l++){
+        uint i;
+        for(i=0; row_begin[i]==UINT_MAX; i++);
+        for(; i<this->row; i++){
+            uint end;
+            for(end=i+1; row_begin[end]==UINT_MAX; end++);
+            for(uint l=row_begin[i]; l<row_begin[end]; l++){
                 ret[i] += (values[l] * vec[col_indices[l]] * sca) + add;
             }
         }
