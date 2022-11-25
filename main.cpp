@@ -22,17 +22,39 @@ using namespace std;
 int main(){
     ios::sync_with_stdio(false); // Comment if stdio has been used!!!
 
-    Parser("graph.txt");
+    Parser *p = new Parser("graph.txt");
+
+    double alpha = 0.2;
+    double epsillon = 1e-6;
+    vector<double> r_t, r_t1(p->csr->get_size().second, 1);
+    int i=0;
+    
+    auto st = chrono::high_resolution_clock::now();
+    cout << "Matrix in size: " << p->csr->get_size().first << " " << p->csr->get_size().second <<endl;
+    do{
+        r_t = r_t1;
+        r_t1 = p->csr->ops(r_t, alpha, 1-alpha);
+        i++;
+        cout << check_sub_ops(r_t1, r_t) << " " << epsillon<< endl;
+    } while(abs(check_sub_ops(r_t1, r_t)) > epsillon);
+    cout << "Completed in "<< i << "iterations..."<<endl;
+    auto end = chrono::high_resolution_clock::now();
+    cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
+
+    st = chrono::high_resolution_clock::now();
+    sort(r_t.begin(), r_t.end(), greater<double>());
+    cout << "Sort completed..."<<endl;
+    end = chrono::high_resolution_clock::now();
+    cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
+
+    for(uint i=0; i<100 && (i<r_t.size()); i++){
+        cout << r_t[i] <<endl;
+    }
+
+
+    delete p;
     return 0;
 
-    vector<vector<double>> P_vec
-    {
-        {1, 0, 1, 1, 0},
-        {0, 0, 1, 1, 0},
-        {1, 1, 1, 1, 0},
-        {0, 1, 0, 1, 0},
-        {1, 1, 0, 0, 1}
-    };
     /*
     For below matrix, google algorithm has given in 26 iterations:
     5.4697
@@ -41,6 +63,15 @@ int main(){
     2.89394
     5.26136
     */
+   /*
+    vector<vector<double>> P_vec
+    {
+        {1, 0, 1, 1, 0},
+        {0, 0, 1, 1, 0},
+        {1, 1, 1, 1, 0},
+        {0, 1, 0, 1, 0},
+        {1, 1, 0, 0, 1}
+    };
     CSR_Matrix P(P_vec);
     double alpha = 0.2;
     double epsillon = 1e-6;
@@ -58,7 +89,7 @@ int main(){
         cout << r_t1[i] << " " << r_t[i] <<"\n";
     }
 
-
+*/
 /*
     // Test for csr write
     vector<vector<int>> vect

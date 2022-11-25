@@ -99,6 +99,35 @@ class CSR_Matrix{
         row_begin.back() = values.size();
     }
 
+    // Special array initializator
+    CSR_Matrix( map<string, vector<string>> &node,
+                map<string, int> &name_dict,
+                vector<string> &arr_dict){
+        this->col = arr_dict.size();
+        this->row = arr_dict.size();
+        for(int i=0; i<this->col; i++){
+            if(i%100000==0){
+                cout << i << " " << arr_dict[i] << " " << node[arr_dict[i]].size() << endl;
+            }
+
+            row_begin.push_back(UINT_MAX);
+            uint old_size = values.size();
+            values.resize(values.size()+node[arr_dict[i]].size());
+            col_indices.resize(values.size());
+
+            //for(auto x: node[arr_dict[i]]){
+            for(int i=0; i<node[arr_dict[i]].size(); i++){
+                if(row_begin.back()==UINT_MAX){
+                    row_begin.back() = values.size();
+                }
+                values[old_size+i]=1;
+                col_indices[old_size+i]=name_dict[node[arr_dict[i]][i]];
+            }
+        }
+        row_begin.push_back(values.size());
+        assert(values.size()==col_indices.size());
+    }
+
     // Non optimal value set. Try not to use
     void set(uint row, uint col, T val){
         auto st = next(col_indices.begin(), row_begin[row]);

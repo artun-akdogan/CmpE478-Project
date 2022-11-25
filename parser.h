@@ -6,6 +6,10 @@
 #include <iostream>
 #include <map>
 #include <unordered_set>
+
+// Only for runtime measurement.
+#include <chrono>
+
 // Uncomment when building for production (disables assert)
 // #define NDEBUG
 #include <assert.h>
@@ -20,15 +24,17 @@ private:
     map<string, vector<string>> node;
     map<string, int> name_dict;
     vector<string> arr_dict;
-    CSR_Matrix<double> *csr;
 
 public:
+    CSR_Matrix<double> *csr;
+
     Parser(const string &filename){
         unordered_set<string> unique_arr;
         ifstream in(filename);
         
         int i=0;
 
+        auto st = chrono::high_resolution_clock::now();
         cout << "Reading file..." << endl;
         while (!in.eof()){
             if(i%1000000==0){
@@ -42,34 +48,32 @@ public:
             i++;
         }
         in.close();
+        
+        auto end = chrono::high_resolution_clock::now();
+        cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
 
-        uint col_size = unique_arr.size();
+        cout << "Total unique sites: " << unique_arr.size() << endl;
 
-        cout << "Total unique sites: " << col_size << endl;
-
-        csr = new CSR_Matrix<double>(0U, col_size);
-
+        st = chrono::high_resolution_clock::now();
         cout << "Creating dictionaries..." << endl;
         unordered_set<string>::iterator it;
-        arr_dict.reserve(col_size);
+        arr_dict.reserve(unique_arr.size());
         for (it = unique_arr.begin(), i=0; it != unique_arr.end(); ++it, ++i) {
             name_dict[*it] = i;
             arr_dict.push_back(*it);
         }
         unique_arr.clear();
+        end = chrono::high_resolution_clock::now();
+        cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
 
+        st = chrono::high_resolution_clock::now();
         cout << "Creating CSR Matrix..." << endl;
-        for(i=0; i<col_size; i++){
-            if(i%1000==0){
-                cout << i << " " << node[arr_dict[i]].size() << endl;
-            }
-            vector<double> row(col_size, 0);
-            for(auto x: node[arr_dict[i]]){
-                row[name_dict[x]]=1;
-            }
-            csr->insert_row(row);
-        }
-
+        csr = new CSR_Matrix<double>(node, name_dict, arr_dict);
+        end = chrono::high_resolution_clock::now();
+        cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
+    }
+    ~Parser(){
+        delete csr;
     }
 };
 
