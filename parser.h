@@ -21,7 +21,8 @@ typedef unsigned int uint;
 
 class Parser{
 private:
-    map<string, vector<string>> node;
+    map<string, vector<string>> link_to;
+    map<string, vector<string>> link_by;
     map<string, int> name_dict;
     vector<string> arr_dict;
 
@@ -42,8 +43,8 @@ public:
             }
             string t1, t2;
             in >> t1 >> t2;
-            node[t1].push_back(t2);
-            //node[t2].push_back(t1);
+            link_to[t1].push_back(t2);
+            link_by[t2].push_back(t1);
             unique_arr.insert(t1);
             unique_arr.insert(t2);
             i++;
@@ -69,7 +70,7 @@ public:
 
         st = chrono::high_resolution_clock::now();
         cout << "Creating CSR Matrix..." << endl;
-        csr = new CSR_Matrix<double>(node, name_dict, arr_dict);
+        csr = new CSR_Matrix<double>(link_to, link_by, name_dict, arr_dict);
         end = chrono::high_resolution_clock::now();
         cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
     }

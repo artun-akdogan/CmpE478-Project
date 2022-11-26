@@ -120,18 +120,19 @@ class CSR_Matrix{
     }
 
     // Special array initializator
-    CSR_Matrix( map<string, vector<string>> &node,
+    CSR_Matrix( map<string, vector<string>> &link_to,
+                map<string, vector<string>> &link_by,
                 map<string, int> &name_dict,
                 vector<string> &arr_dict){
         this->col = arr_dict.size();
         this->row = arr_dict.size();
         for(int i=0; i<this->col; i++){
             if(i%100000==0){
-                cout << i << " " << arr_dict[i] << " " << node[arr_dict[i]].size() << endl;
+                cout << i << " " << arr_dict[i] << " " << link_by[arr_dict[i]].size() << endl;
             }
 
             uint old_size = values.size();
-            values.resize(values.size()+node[arr_dict[i]].size());
+            values.resize(values.size()+link_by[arr_dict[i]].size());
             col_indices.resize(values.size());
             if(values.size()==old_size){
                 row_begin.push_back(UINT_MAX);
@@ -139,10 +140,12 @@ class CSR_Matrix{
                 row_begin.push_back(old_size);
             }
 
+            // Parallelisable
             //for(auto x: node[arr_dict[i]]){
-            for(int l=0; l<node[arr_dict[i]].size(); l++){
-                values[old_size+l]=1/node[arr_dict[i]].size();
-                col_indices[old_size+l]=name_dict[node[arr_dict[i]][l]];
+            for(int l=0; l<link_by[arr_dict[i]].size(); l++){
+                assert(link_to[link_by[arr_dict[i]][l]].size()!=0);
+                values[old_size+l]=1/(link_to[link_by[arr_dict[i]][l]].size());
+                col_indices[old_size+l]=name_dict[link_by[arr_dict[i]][l]];
             }
             // Sorting is not required
             //sort(col_indices.begin()+old_size, col_indices.end());
@@ -181,14 +184,15 @@ class CSR_Matrix{
 
     vector<T> ops(const vector<T> &vec, T sca, T add){
         assert(vec.size()==this->col);
-        vector<T> ret(this->row);
+        vector<T> ret(this->row, add);
         uint i;
+        // Parallelisable
         for(i=0; row_begin[i]==UINT_MAX; i++);
         for(; i<this->row; i++){
             uint end;
             for(end=i+1; row_begin[end]==UINT_MAX; end++);
             for(uint l=row_begin[i]; l<row_begin[end]; l++){
-                ret[i] += (values[l] * vec[col_indices[l]] * sca) + add;
+                ret[i] += (values[l] * vec[col_indices[l]] * sca);
             }
         }
         return ret;
