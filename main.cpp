@@ -43,6 +43,7 @@ int main(int argc, char** argv){
     
     auto st = chrono::high_resolution_clock::now();
     cout << "Matrix in size: " << P->get_size().first << " " << P->get_size().second <<endl;
+    // Better to parallelize CSR Matrix operations instead of this loop.
     do{
         r_t = r_t1;
         r_t1 = P->ops(r_t, alpha, 1-alpha);

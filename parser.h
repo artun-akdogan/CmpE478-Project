@@ -37,6 +37,7 @@ public:
 
         auto st = chrono::high_resolution_clock::now();
         cout << "Reading file..." << endl;
+        // Time passed: 115973, but not parallelizable
         while (!in.eof()){
             if(i%1000000==0){
                 cout << i << endl;
@@ -60,6 +61,7 @@ public:
         cout << "Creating dictionaries..." << endl;
         unordered_set<string>::iterator it;
         arr_dict.reserve(unique_arr.size());
+        // Time passed: 6040, but not parallelizable (No need to parallelize either)
         for (it = unique_arr.begin(), i=0; it != unique_arr.end(); ++it, ++i) {
             name_dict[*it] = i;
             arr_dict.push_back(*it);
