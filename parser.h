@@ -43,6 +43,7 @@ public:
             string t1, t2;
             in >> t1 >> t2;
             node[t1].push_back(t2);
+            //node[t2].push_back(t1);
             unique_arr.insert(t1);
             unique_arr.insert(t2);
             i++;

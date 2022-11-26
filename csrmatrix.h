@@ -141,9 +141,11 @@ class CSR_Matrix{
 
             //for(auto x: node[arr_dict[i]]){
             for(int l=0; l<node[arr_dict[i]].size(); l++){
-                values[old_size+l]=1;
+                values[old_size+l]=1/node[arr_dict[i]].size();
                 col_indices[old_size+l]=name_dict[node[arr_dict[i]][l]];
             }
+            // Sorting is not required
+            //sort(col_indices.begin()+old_size, col_indices.end());
         }
         row_begin.push_back(values.size());
         assert(values.size()==col_indices.size());
