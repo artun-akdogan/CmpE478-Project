@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <omp.h>
 
 // Only for runtime measurement.
 #include <chrono>
@@ -22,11 +23,26 @@ using namespace std;
 // Currently, main function is only for test and runtime measurement
 int main(int argc, char** argv){
     ios::sync_with_stdio(false); // Comment if stdio has been used!!!
+	omp_set_num_threads(8);
+    omp_sched_t _type;
+    if(argc<3) return -1;
+    if(strcmp(argv[1], "static")==0){
+        _type=omp_sched_static;
+    } else if(strcmp(argv[1], "dynamic")==0){
+        _type=omp_sched_dynamic;
+    } else if(strcmp(argv[1], "guided")==0){
+        _type=omp_sched_guided;
+    } else if(strcmp(argv[1], "auto")==0){
+        _type=omp_sched_auto;
+    } else{
+        return -1;
+    }
+    omp_set_schedule(_type, atoi(argv[2]));
     Parser *parse;
     CSR_Matrix<double> *P;
 
-    if(argc==3 && strcmp(argv[1], "load")==0){
-        P = new CSR_Matrix<double>(string(argv[2]));
+    if(argc==5 && strcmp(argv[3], "load")==0){
+        P = new CSR_Matrix<double>(string(argv[4]));
     }
     else{
         parse = new Parser("graph.txt");
@@ -50,21 +66,63 @@ int main(int argc, char** argv){
         i++;
         cout << check_sub_ops(r_t1, r_t) << " " << epsillon<< endl;
     } while(abs(check_sub_ops(r_t1, r_t)) > epsillon);
-    cout << "Completed in "<< i << "iterations..."<<endl;
+    cout << "Completed in "<< i << " iterations..."<<endl;
     auto end = chrono::high_resolution_clock::now();
     cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
 
+/*
     st = chrono::high_resolution_clock::now();
+
     sort(r_t.begin(), r_t.end(), greater<double>());
     cout << "Sort completed..."<<endl;
     end = chrono::high_resolution_clock::now();
     cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
-
-    for(uint i=0; i<100 && (i<r_t.size()); i++){
-        cout << r_t[i] <<endl;
+*/
+    vector<string>high;
+    double maxi, last = numeric_limits<double>::max();
+    // Find max 5 with simple n*5 iteration
+    for(int i=0; i<5; i++){
+        int ind=0;
+        maxi = numeric_limits<double>::min();
+        for (int l=0; l<r_t.size(); l++){
+            if(maxi<r_t[l] && r_t[l]<last){
+                maxi = r_t[l];
+                ind = l;
+            }
+        }
+        cerr << ind << endl;
+        cerr << ind << " "<< last << " " << maxi << endl;
+        last = maxi;
+        high.push_back(P->arr_dict[ind]);
     }
 
-    if(argc==3 && strcmp(argv[1], "load"))
+    vector<vector<string>>res_vec;
+    res_vec.push_back(high);
+
+    write_csv("result.csv", vector<string>(), res_vec);
+
+    for(uint i=0; i<5 && (i<r_t.size()); i++){
+        cout << r_t[i] <<endl;
+    }/*
+    for(uint i=0; i<8; i++){
+        cout << P->tim_arr[i] <<endl;
+    }*/
+
+    vector<vector<string>> logs = read_csv("log.csv");
+    cerr << "Read csv" << endl;
+    vector<string> last_row;
+    last_row.push_back(to_string(logs.size()+1));
+    last_row.push_back(argv[1]); //Schedule method
+    last_row.push_back(argv[2]); //Chunk size
+    last_row.push_back(to_string(P->no_of_iterations));
+    vector<string> iter = vector_to_string(P->tim_arr);
+    last_row.insert(last_row.end(), iter.begin(), iter.end());
+    logs.push_back(last_row);
+    vector<string>col_names({"Test No.", "Scheduling Method", "Chunk Size", "No of Iterations", "1", "2", "3", "4", "5", "6", "7", "8"});
+    cerr << "Now write" << endl;
+    write_csv("log.csv", col_names, logs);
+
+    if(argc==5 && strcmp(argv[3], "load")==0)
         delete P;
     else
         delete parse;

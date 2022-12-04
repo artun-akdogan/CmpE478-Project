@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <sstream>
 
 // Uncomment when building for production (disables assert)
 // #define NDEBUG
@@ -20,7 +21,19 @@ inline vector<string> vector_to_string(const vector<T> &vec){
                    [&](T d) { return to_string(d); } );
     return ret;
 }
-
+inline vector<string> string_to_svector(const string &str, const string &delimiter){
+    vector<string> ret;
+    size_t last = 0;
+    size_t next = 0;
+    while ((next = str.find(delimiter, last)) != string::npos) {
+        string temp = str.substr(last, next-last);
+        ret.push_back(temp);
+        last = next + 1;
+    }
+    string temp = str.substr(last);
+    ret.push_back(temp);
+    return ret;
+}
 inline vector<double> string_to_dvector(const string &str, const string &delimiter){
     vector<double> ret;
     size_t last = 0;
@@ -78,6 +91,31 @@ void write_csv(const string &filename, const vector<string> &colname, const vect
     ofstream csv(filename);
     csv << buffer;
     csv.close();
+}
+
+vector<vector<string>> read_csv(const string &filename){
+    ifstream file("log.csv",ios::in);
+    if (file.good()){
+        string str;
+        // First line is information line, ignore
+        if(getline(file, str)){
+            vector<vector<string>>res;
+            while(getline(file, str)) {
+                str.erase(remove(str.begin(), str.end(), '\r' ), str.end());
+                str.erase(remove(str.begin(), str.end(), '\n' ), str.end());
+                vector<string>row;
+                stringstream ss(str);
+                while (ss.good()) {
+                    string substr;
+                    getline(ss, substr, ',');
+                    row.push_back(substr);
+                }
+                res.push_back(row);
+            }
+            return res;
+        }
+    }
+    return vector<vector<string>>();
 }
 
 #endif

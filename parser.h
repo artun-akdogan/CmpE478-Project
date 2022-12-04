@@ -21,9 +21,9 @@ typedef unsigned int uint;
 
 class Parser{
 private:
-    map<string, vector<string>> link_to;
-    map<string, vector<string>> link_by;
-    map<string, int> name_dict;
+    vector<unordered_set<int>> link_to;
+    vector<vector<int>> link_by;
+    unordered_map<string, int> name_dict;
     vector<string> arr_dict;
 
 public:
@@ -31,21 +31,23 @@ public:
 
     Parser(const string &filename){
         unordered_set<string> unique_arr;
+        vector<pair<string, string>>temp;
         ifstream in(filename);
         
         int i=0;
 
         auto st = chrono::high_resolution_clock::now();
         cout << "Reading file..." << endl;
-        // Time passed: 115973, but not parallelizable
+        // Time passed: 50sec, but not parallelizable
+        string t1, t2;
         while (!in.eof()){
             if(i%1000000==0){
                 cout << i << endl;
             }
-            string t1, t2;
             in >> t1 >> t2;
-            link_to[t1].push_back(t2);
-            link_by[t2].push_back(t1);
+            temp.push_back({t1, t2});
+            //link_to[t1].insert(t2);
+            //link_by[t2].push_back(t1);
             unique_arr.insert(t1);
             unique_arr.insert(t2);
             i++;
@@ -59,14 +61,26 @@ public:
 
         st = chrono::high_resolution_clock::now();
         cout << "Creating dictionaries..." << endl;
-        unordered_set<string>::iterator it;
-        arr_dict.reserve(unique_arr.size());
+        unordered_set<string>::const_iterator uit;
         // Time passed: 6040, but not parallelizable (No need to parallelize either)
-        for (it = unique_arr.begin(), i=0; it != unique_arr.end(); ++it, ++i) {
-            name_dict[*it] = i;
-            arr_dict.push_back(*it);
+        for (uit = unique_arr.begin(), i=0; uit != unique_arr.end(); ++uit, ++i) {
+            name_dict[*uit] = i;
+            arr_dict.push_back(*uit);
         }
         unique_arr.clear();
+        vector<pair<string, string>>::const_iterator it;
+        link_to.resize(arr_dict.size());
+        link_by.resize(arr_dict.size());
+        // Time passed: 40sec
+        for (it = temp.begin(), i=0; it != temp.end(); ++it, ++i) {
+            if(i%1000000==0){
+                cout << i << endl;
+            }
+            int p1 = name_dict[it->first], p2=name_dict[it->second];
+            link_to[p1].insert(p2);
+            link_by[p2].push_back(p1);
+        }
+        temp.clear();
         end = chrono::high_resolution_clock::now();
         cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
 
