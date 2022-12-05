@@ -38,15 +38,13 @@ int main(int argc, char** argv){
         return -1;
     }
     omp_set_schedule(_type, atoi(argv[2]));
-    Parser *parse;
     CSR_Matrix<double> *P;
 
     if(argc==5 && strcmp(argv[3], "load")==0){
         P = new CSR_Matrix<double>(string(argv[4]));
     }
     else{
-        parse = new Parser("graph.txt");
-        P = parse->csr;
+        P = parse("graph.txt");
         P->write("backup.csv");
     }
 
@@ -78,7 +76,7 @@ int main(int argc, char** argv){
     end = chrono::high_resolution_clock::now();
     cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
 */
-    vector<string>high;
+    vector<vector<string>>high;
     double maxi, last = numeric_limits<double>::max();
     // Find max 5 with simple n*5 iteration
     for(int i=0; i<5; i++){
@@ -90,20 +88,16 @@ int main(int argc, char** argv){
                 ind = l;
             }
         }
-        cerr << ind << endl;
         cerr << ind << " "<< last << " " << maxi << endl;
         last = maxi;
-        high.push_back(P->arr_dict[ind]);
+        high.push_back(vector<string>({P->arr_dict[ind], to_string(maxi)}));
     }
 
-    vector<vector<string>>res_vec;
-    res_vec.push_back(high);
-
-    write_csv("result.csv", vector<string>(), res_vec);
-
+    write_csv("result.csv", vector<string>({"Nodes", "Scores"}), high);
+/*
     for(uint i=0; i<5 && (i<r_t.size()); i++){
         cout << r_t[i] <<endl;
-    }/*
+    }*//*
     for(uint i=0; i<8; i++){
         cout << P->tim_arr[i] <<endl;
     }*/
@@ -122,10 +116,7 @@ int main(int argc, char** argv){
     cerr << "Now write" << endl;
     write_csv("log.csv", col_names, logs);
 
-    if(argc==5 && strcmp(argv[3], "load")==0)
-        delete P;
-    else
-        delete parse;
+    delete P;
     return 0;
 
     /*
