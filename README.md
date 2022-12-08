@@ -13,12 +13,12 @@ Initialises CSR matrix from local graph.txt file, then writes it to specified fi
 
 ### ./program
 
-Initialises CSR matrix from local graph.txt file. No other file is interfered.
+Initialises CSR matrix from local graph.txt file. No other file is interfered with.
 
 # Files read and written on runtime:
 ### graph.txt
 
-This is the web graph file. It is read and parsed to create CSR matrix please refer to [Erdos Web Graph](https://web.archive.org/web/20220310125510/http://web-graph.org/index.php/download).
+This is the web graph file. It is read and parsed to create CSR matrix. Please refer to [Erdos Web Graph](https://web.archive.org/web/20220310125510/http://web-graph.org/index.php/download).
 
 ### log.csv
 
