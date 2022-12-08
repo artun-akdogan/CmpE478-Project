@@ -1,6 +1,10 @@
 # How to run on linux:
-* g++ -fopenmp -D NDEBUG -o program main.cpp
+* sudo apt install libomp-dev
+* g++ -std=c++14 -fopenmp -DNDEBUG main.cpp -oprogram
+* chmod +x ./program
 * ./program
+
+If all fails, please find precompiled program_backup at this directory.
 
 # Arguments
 ### ./program load backup.csv
