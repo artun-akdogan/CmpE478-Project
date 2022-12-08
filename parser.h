@@ -6,9 +6,7 @@
 #include <iostream>
 #include <map>
 #include <unordered_set>
-
-// Only for runtime measurement.
-#include <chrono>
+#include <omp.h>
 
 // Uncomment when building for production (disables assert)
 // #define NDEBUG
@@ -21,70 +19,82 @@ typedef unsigned int uint;
 
 CSR_Matrix<double> *parse(const string &filename){
     CSR_Matrix<double> *csr;
-    vector<unordered_set<int>> link_to;
+    vector<vector<int>> link_to;
     vector<vector<int>> link_by;
     unordered_map<string, int> name_dict;
     vector<string> arr_dict;
+    double tim_st, tim_end;
 
     unordered_set<string> unique_arr;
     vector<pair<string, string>>temp;
     ifstream in(filename);
-    
-    int i=0;
 
-    auto st = chrono::high_resolution_clock::now();
+    int i, p1, p2;
+
+    tim_st = omp_get_wtime( );
     cout << "Reading file..." << endl;
-    // Time passed: 50sec, but not parallelizable
+
+    // Approximate size initialization (dropped time from 53 sec to 47 sec)
+    temp.reserve(17000000);
+    unique_arr.reserve(17000000);
+
+    // Time passed: 53sec, but not parallelizable (Attempts made it worse)
     string t1, t2;
     while (!in.eof()){
         if(i%1000000==0){
             cout << i << endl;
         }
         in >> t1 >> t2;
-        temp.push_back({t1, t2});
-        //link_to[t1].insert(t2);
-        //link_by[t2].push_back(t1);
+        temp.push_back({t2, t1});
         unique_arr.insert(t1);
         unique_arr.insert(t2);
         i++;
     }
     in.close();
     
-    auto end = chrono::high_resolution_clock::now();
-    cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
+    tim_end = omp_get_wtime( );
+    cout << "Time passed: " << tim_end-tim_st << endl;
 
     cout << "Total unique sites: " << unique_arr.size() << endl;
 
-    st = chrono::high_resolution_clock::now();
-    cout << "Creating dictionaries..." << endl;
-    unordered_set<string>::const_iterator uit;
-    // Time passed: 6040, but not parallelizable (No need to parallelize either)
-    for (uit = unique_arr.begin(), i=0; uit != unique_arr.end(); ++uit, ++i) {
+
+    tim_st = omp_get_wtime( );
+    cout << "Creating numeration..." << endl;
+    // Time passed: 3sec, but hard to parallelize (No need to parallelize either)
+    unordered_set<string>::const_iterator uit = unique_arr.begin();
+    for (i=0; uit != unique_arr.end(); ++uit, ++i) {
         name_dict[*uit] = i;
         arr_dict.push_back(*uit);
     }
     unique_arr.clear();
-    vector<pair<string, string>>::const_iterator it;
     link_to.resize(arr_dict.size());
     link_by.resize(arr_dict.size());
-    // Time passed: 40sec
-    for (it = temp.begin(), i=0; it != temp.end(); ++it, ++i) {
-        if(i%1000000==0){
-            cout << i << endl;
+    tim_end = omp_get_wtime( );
+    cout << "Time passed: " << tim_end-tim_st << endl;
+
+    tim_st = omp_get_wtime( );
+    cout << "Creating nodes..." << endl;
+    // Parallelization dropped time from 20 sec to 8 sec
+    #pragma omp parallel for private(i, p1, p2) shared(link_to, link_by, name_dict) schedule(dynamic, 50000)
+    for (i=0; i<temp.size(); i++) {
+        p1 = name_dict.find(temp[i].first)->second;
+        p2 = name_dict.find(temp[i].second)->second;
+
+        #pragma omp critical
+        {
+            link_to[p1].push_back(p2);
+            link_by[p2].push_back(p1);
         }
-        int p1 = name_dict[it->first], p2=name_dict[it->second];
-        link_to[p1].insert(p2);
-        link_by[p2].push_back(p1);
     }
     temp.clear();
-    end = chrono::high_resolution_clock::now();
-    cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
+    tim_end = omp_get_wtime( );
+    cout << "Time passed: " << tim_end-tim_st << endl;
 
-    st = chrono::high_resolution_clock::now();
+    tim_st = omp_get_wtime( );
     cout << "Creating CSR Matrix..." << endl;
     csr = new CSR_Matrix<double>(link_to, link_by, name_dict, arr_dict);
-    end = chrono::high_resolution_clock::now();
-    cout << "Time passed: " << chrono::duration_cast<chrono::milliseconds>(end-st).count() << endl;
+    tim_end = omp_get_wtime( );
+    cout << "Time passed: " << tim_end-tim_st << endl;
     return csr;
 };
 

@@ -38,8 +38,7 @@ class CSR_Matrix{
     vector<T> values;
 
     public:
-    vector<double> tim_arr;
-    int no_of_iterations=0;
+    double two_vec_diff=0;
     vector<string> arr_dict;
     // Write matrix to file
     void write(const string &filename){
@@ -68,10 +67,9 @@ class CSR_Matrix{
 
     // Initialize matrix from file
     CSR_Matrix(const string &filename){
-        tim_arr.resize(8, 0);
         ifstream csv(filename);
-        string str_init, str_row, str_val, str_col;
-        csv >> str_init >> str_row >> str_val >> str_col;
+        string str_init, str_row, str_val, str_col, str_maps;
+        csv >> str_init >> str_row >> str_val >> str_col >> str_maps;
         cout << "Read file" << endl;
         vector<uint>temp = string_to_uivector(str_init, ",");
         this->row = temp[0];
@@ -79,18 +77,17 @@ class CSR_Matrix{
         row_begin = string_to_uivector(str_row, ",");
         values = string_to_dvector(str_val, ",");
         col_indices = string_to_uivector(str_col, ",");
-        arr_dict = string_to_svector(str_col, ",");
+        arr_dict = string_to_svector(str_maps, ",");
 
     }
 
     // Special array initializator
     // Time passed: 156651, must be parallelized somehow
-    CSR_Matrix( vector<unordered_set<int>> &link_to,
+    CSR_Matrix( vector<vector<int>> &link_to,
                 vector<vector<int>> &link_by,
                 unordered_map<string, int> &name_dict,
                 vector<string> &arr_dict){
         this->arr_dict = arr_dict;
-        tim_arr.resize(8, 0);
         this->col = arr_dict.size();
         this->row = arr_dict.size();
 
@@ -198,23 +195,21 @@ class CSR_Matrix{
     // Parallelizable, but 5 iterations take 3879. Should be parallelized as project description requires it.
     vector<T> ops(const vector<T> &vec, T sca, T add){
         assert(vec.size()==this->col);
-        vector<T> ret(this->row, add);
+        vector<T> ret(this->row, add/this->col);
         uint i, end, l, beg;
-        double tim_st, tim_end;
         // Parallelizable
         for(beg=0; row_begin[beg]==UINT_MAX; beg++);
+        two_vec_diff=0;
 
-        #pragma omp parallel for private(i, end, l, tim_st, tim_end) //schedule(static,3) // I am changing this with function.
+        #pragma omp parallel for shared(row_begin, values, vec, col_indices, ret) \
+                private(i, end, l) schedule(runtime) reduction(+: two_vec_diff)
         for(i=beg; i<this->row; i++){
-            tim_st = omp_get_wtime( );
             for(end=i+1; row_begin[end]==UINT_MAX; end++);
             for(l=row_begin[i]; l<row_begin[end]; l++){
                 ret[i] += (values[l] * vec[col_indices[l]] * sca);
             }
-            tim_end = omp_get_wtime( );
-            tim_arr[omp_get_thread_num()]+=tim_end-tim_st;
+            two_vec_diff+=abs(ret[i]-vec[i]);
         }
-        no_of_iterations += this->row - beg;
         return ret;
     }
 };
