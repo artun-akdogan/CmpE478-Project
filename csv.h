@@ -21,6 +21,8 @@ inline vector<string> vector_to_string(const vector<T> &vec){
                    [&](T d) { return to_string(d); } );
     return ret;
 }
+
+// Convert string to vector of strings by dividing with delimeter
 inline vector<string> string_to_svector(const string &str, const string &delimiter){
     vector<string> ret;
     size_t last = 0;
@@ -34,6 +36,8 @@ inline vector<string> string_to_svector(const string &str, const string &delimit
     ret.push_back(temp);
     return ret;
 }
+
+// Convert string to vector of doubles by dividing with delimeter
 inline vector<double> string_to_dvector(const string &str, const string &delimiter){
     vector<double> ret;
     size_t last = 0;
@@ -47,6 +51,8 @@ inline vector<double> string_to_dvector(const string &str, const string &delimit
     ret.push_back(stod(temp));
     return ret;
 }
+
+// Convert string to vector of unsigned integers by dividing with delimeter
 inline vector<unsigned int> string_to_uivector(const string &str, const string &delimiter){
     vector<unsigned int> ret;
     size_t last = 0;
@@ -61,6 +67,7 @@ inline vector<unsigned int> string_to_uivector(const string &str, const string &
     return ret;
 }
 
+// Join vector of strings with specified delimeter
 const string join(const vector<string> &lst, const string &delim){
     // Basic string vector join, similar to Python's
     string ret;
@@ -93,6 +100,7 @@ void write_csv(const string &filename, const vector<string> &colname, const vect
     csv.close();
 }
 
+// Unoptimised csv reader
 vector<vector<string>> read_csv(const string &filename){
     ifstream file("log.csv",ios::in);
     if (file.good()){
