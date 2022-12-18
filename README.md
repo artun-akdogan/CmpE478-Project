@@ -22,7 +22,7 @@ Initialises CSR matrix from local graph.txt file. No other file is interfered wi
 # Files read and written on runtime:
 ### graph.txt
 
-This is the web graph file. It is read and parsed to create CSR matrix. Please refer to [Erdos Web Graph](https://web.archive.org/web/20220310125510/http://web-graph.org/index.php/download).
+This is the web graph file. It should be on the same directory with the program, or it will not work. It is read and parsed to create CSR matrix. Please refer to [Erdos Web Graph](https://web.archive.org/web/20220310125510/http://web-graph.org/index.php/download).
 
 ### log.csv
 
