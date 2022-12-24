@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <unordered_map>
 #include <limits.h>
-#include <omp.h>
 
 // Uncomment when building for production (disables assert)
 // #define NDEBUG
@@ -132,8 +131,6 @@ class CSR_Matrix{
         two_vec_diff=0;
 
         // Parallelised for loop
-        #pragma omp parallel for shared(row_begin, values, vec, col_indices, ret) \
-                private(i, end, l) schedule(runtime) reduction(+: two_vec_diff)
         for(i=beg; i<this->row; i++){
             // Skip zero rows
             for(end=i+1; row_begin[end]==UINT_MAX; end++);
