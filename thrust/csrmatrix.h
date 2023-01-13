@@ -8,6 +8,13 @@
 #include <unordered_map>
 #include <limits.h>
 
+// Thrust
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <thrust/generate.h>
+#include <thrust/sort.h>
+#include <thrust/copy.h>
+
 // Uncomment when building for production (disables assert)
 // #define NDEBUG
 #include <assert.h>
@@ -17,11 +24,39 @@
 using namespace std;
 typedef unsigned int uint;
 
+struct saxpy_ops{
+    const uint * const row_begin;
+    const uint * const col_indices;
+    const float * const values;
+    const float * const vec;
+    const double sca, add;
+
+    saxpy_ops(uint *_row_begin, uint *_col_indices, float *_values, float *_vec, double _sca, double _add) 
+        : row_begin(_row_begin), col_indices(_col_indices), values(_values), vec(_vec), sca(_sca), add(_add) {}
+
+    __host__ __device__ double operator()(const size_t idx) const{
+        double res = add;
+        uint l, end;
+        // Skip zero rows
+        for(end=idx+1; row_begin[end]==UINT_MAX; end++);
+        // Matrix multiplication
+        for(l=row_begin[idx]; l<row_begin[end]; l++){
+            // While multiplying, also multiply with the scaler
+            res += (values[l] * vec[col_indices[l]] * sca);
+        }
+        return res;
+    }
+};
+
 template<typename T>
 class CSR_Matrix{
     private:
     uint row, col;
     // Value indices. Must be ordered
+    thrust::device_vector<uint> _row_begin;
+    thrust::device_vector<uint> _col_indices;
+    //Non zero values in the matrix
+    thrust::device_vector<T> _values;
     vector<uint> row_begin;
     vector<uint> col_indices;
     //Non zero values in the matrix
@@ -120,12 +155,24 @@ class CSR_Matrix{
         assert(values.size()==col_indices.size());
     }
 
-    vector<T> ops(const vector<T> &vec, T sca, T add){
+    thrust::device_vector<double> ops(thrust::device_vector<double> &ret, thrust::device_vector<double> &vec, T sca, T add){
         assert(vec.size()==this->col);
         uint i, end, l, beg;
         // Initialize with multiplied C vector
-        vector<T> ret(this->row, add/this->col);
+        //vector<T> ret(this->row, add/this->col);
+        // add/this->col
+        thrust::transform(  thrust::counting_iterator<uint>(0),
+                            thrust::counting_iterator<uint>(this->row),
+                            ret.begin(),
+                            saxpy_ops(  thrust::raw_pointer_cast(row_begin.data()),
+                                        thrust::raw_pointer_cast(col_indices.data()),
+                                        thrust::raw_pointer_cast(values.data()),
+                                        thrust::raw_pointer_cast(vec.data()),
+                                        sca,
+                                        add/this->col)
+                            );
 
+        /*
         // Skip zero rows
         for(beg=0; row_begin[beg]==UINT_MAX; beg++);
         two_vec_diff=0;
@@ -142,6 +189,7 @@ class CSR_Matrix{
             // Log vector difference
             two_vec_diff+=abs(ret[i]-vec[i]);
         }
+        */
         return ret;
     }
 };

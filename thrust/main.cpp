@@ -7,6 +7,13 @@
 #include <iostream>
 #include <time.h>  //For clock_gettime
 
+// Thrust
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <thrust/generate.h>
+#include <thrust/sort.h>
+#include <thrust/copy.h>
+
 // Uncomment when building for production (disables assert)
 // #define NDEBUG
 #include <assert.h>
@@ -24,6 +31,7 @@ void run_program(CSR_Matrix<double> *P){
     double alpha = 0.2;
     double epsillon = 1e-6;
     vector<double> r_t, r_t1(P->get_size().second, 1);
+    thrust::device_vector<double>d_x, d_x1(r_t1.begin(), r_t1.end())
 
     // Time measure
     struct timespec mt1, mt2;
@@ -35,11 +43,12 @@ void run_program(CSR_Matrix<double> *P){
     // Begin operation. Keep going until vector diff is below epsilon
     // P->ops function is parallelised, this loop only performs minor operations.
     do{
-        r_t = r_t1;
-        r_t1 = P->ops(r_t, alpha, 1-alpha);
+        d_x = d_x1;
+        P->ops(d_x1, d_x, alpha, 1-alpha);
         iterations++;
         cout << "Current Diff: "<<P->two_vec_diff<< endl;
     } while(P->two_vec_diff > epsillon);
+    thrust::copy(d_x.begin(), d_x.end(), r_t.begin());
 
     // Print passed time. Also, this value will be used on schedule_program function.
     clock_gettime (CLOCK_REALTIME, &mt2);
