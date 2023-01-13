@@ -30,8 +30,8 @@ void run_program(CSR_Matrix<double> *P){
     int iterations=0;
     double alpha = 0.2;
     double epsillon = 1e-6;
-    vector<double> r_t, r_t1(P->get_size().second, 1);
-    thrust::device_vector<double>d_x, d_x1(r_t1.begin(), r_t1.end())
+    vector<double> r_t(P->get_size().second, 1);
+    thrust::device_vector<double>d_x, d_x1(r_t.begin(), r_t.end());
 
     // Time measure
     struct timespec mt1, mt2;
@@ -102,6 +102,8 @@ int main(int argc, char** argv){
             P->write(argv[2]);
         }
     }
+    // Transfer items to gpu device (Also erase ram content)
+    P->transfer_device();
 
     cout << "CSR Matrix Initialized" << endl;
 

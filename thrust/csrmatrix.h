@@ -24,14 +24,21 @@
 using namespace std;
 typedef unsigned int uint;
 
-struct saxpy_ops{
-    const uint * const row_begin;
-    const uint * const col_indices;
-    const float * const values;
-    const float * const vec;
-    const double sca, add;
+template<typename T>
+struct saxpy_abs{
+    __host__ __device__ T operator()(const T &a)const{
+        return abs(a);
+    }
+};
 
-    saxpy_ops(uint *_row_begin, uint *_col_indices, float *_values, float *_vec, double _sca, double _add) 
+struct saxpy_ops{
+    const uint * row_begin;
+    const uint * col_indices;
+    const double * values;
+    const double * vec;
+    const float sca, add;
+
+    saxpy_ops(uint *_row_begin, uint *_col_indices, double *_values, double *_vec, double _sca, double _add) 
         : row_begin(_row_begin), col_indices(_col_indices), values(_values), vec(_vec), sca(_sca), add(_add) {}
 
     __host__ __device__ double operator()(const size_t idx) const{
@@ -92,6 +99,16 @@ class CSR_Matrix{
         ofstream csv(filename);
         csv << buffer;
         csv.close();
+    }
+
+    // This function is used 
+    void transfer_device(){
+        _row_begin = row_begin;
+        _col_indices = col_indices;
+        _values = values;
+        row_begin.clear();
+        col_indices.clear();
+        values.clear();
     }
 
     // Get matrix size
@@ -155,22 +172,26 @@ class CSR_Matrix{
         assert(values.size()==col_indices.size());
     }
 
-    thrust::device_vector<double> ops(thrust::device_vector<double> &ret, thrust::device_vector<double> &vec, T sca, T add){
+    void ops(thrust::device_vector<double> &ret, thrust::device_vector<double> &vec, T sca, T add){
         assert(vec.size()==this->col);
-        uint i, end, l, beg;
+        //uint i, end, l, beg;
         // Initialize with multiplied C vector
         //vector<T> ret(this->row, add/this->col);
         // add/this->col
+        
         thrust::transform(  thrust::counting_iterator<uint>(0),
                             thrust::counting_iterator<uint>(this->row),
                             ret.begin(),
-                            saxpy_ops(  thrust::raw_pointer_cast(row_begin.data()),
-                                        thrust::raw_pointer_cast(col_indices.data()),
-                                        thrust::raw_pointer_cast(values.data()),
+                            saxpy_ops(  thrust::raw_pointer_cast(_row_begin.data()),
+                                        thrust::raw_pointer_cast(_col_indices.data()),
+                                        thrust::raw_pointer_cast(_values.data()),
                                         thrust::raw_pointer_cast(vec.data()),
                                         sca,
                                         add/this->col)
                             );
+        thrust::device_vector<double> _temp(this->row);
+        thrust::transform(ret.begin(), ret.end(), vec.begin(), _temp.begin(), thrust::minus<double>());
+        two_vec_diff = thrust::transform_reduce(_temp.begin(), _temp.end(), saxpy_abs<double>(), 0.0, thrust::plus<double>());
 
         /*
         // Skip zero rows
@@ -190,7 +211,6 @@ class CSR_Matrix{
             two_vec_diff+=abs(ret[i]-vec[i]);
         }
         */
-        return ret;
     }
 };
 
