@@ -20,14 +20,14 @@ typedef unsigned int uint;
 template<typename T>
 class CSR_Matrix{
     private:
+
+    public:
     uint row, col;
     // Value indices. Must be ordered
     vector<uint> row_begin;
     vector<uint> col_indices;
     //Non zero values in the matrix
     vector<T> values;
-
-    public:
     // Those values are non essential to CSR matrix's runtime.
     // But if they shouldn't be changed without caution.
     double two_vec_diff=0;
@@ -62,6 +62,12 @@ class CSR_Matrix{
     // Get matrix size
     pair<uint, uint> get_size() const{
         return {row, col};
+    }
+
+    // Initialize by row/column
+    CSR_Matrix(uint row, uint col){
+        this->row = row;
+        this->col = col;
     }
 
     // Initialize matrix from file
@@ -102,7 +108,10 @@ class CSR_Matrix{
             col_indices.resize(values.size());
             // If it is a zero row, then set according row_begin index to UINT_MAX
             if(values.size()==old_size){
-                row_begin.push_back(UINT_MAX);
+                if(old_size==0)
+                    row_begin.push_back(UINT_MAX);
+                else
+                    row_begin.push_back(row_begin.back());
             }else{
                 row_begin.push_back(old_size);
             }
@@ -120,7 +129,7 @@ class CSR_Matrix{
         assert(values.size()==col_indices.size());
     }
 
-    vector<T> ops(const vector<T> &vec, T sca, T add){
+    vector<T> ops(const vector<T> &vec, T sca, T add, uint vecbeg=0){
         assert(vec.size()==this->col);
         uint i, end, l, beg;
         // Initialize with multiplied C vector
@@ -129,18 +138,17 @@ class CSR_Matrix{
         // Skip zero rows
         for(beg=0; row_begin[beg]==UINT_MAX; beg++);
         two_vec_diff=0;
-
         // Parallelised for loop
         for(i=beg; i<this->row; i++){
             // Skip zero rows
-            for(end=i+1; row_begin[end]==UINT_MAX; end++);
+            for(end=i+1; end<=this->row && row_begin[end]==row_begin[end-1] ; end++);
             // Matrix multiplication
             for(l=row_begin[i]; l<row_begin[end]; l++){
                 // While multiplying, also multiply with the scaler
                 ret[i] += (values[l] * vec[col_indices[l]] * sca);
             }
             // Log vector difference
-            two_vec_diff+=abs(ret[i]-vec[i]);
+            two_vec_diff+=abs(ret[i]-vec[i+vecbeg]);
         }
         return ret;
     }
